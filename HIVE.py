@@ -24,6 +24,9 @@ def get_all_pages():
 
     if pages_path.exists():
         saved_default_pages = json.loads(pages_path.read_text())
+        current_pages = get_pages(DEFAULT_PAGE)
+        current_pages.update(saved_default_pages)
+        _on_pages_changed.send()
       
     else:
         saved_default_pages = default_pages.copy()
