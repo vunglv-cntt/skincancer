@@ -19,7 +19,7 @@ def api_login():
     user = users_collection.find_one({"username": username})
 
     if user and bcrypt.check_password_hash(user['password'], password):
-        return jsonify({"idUser": user['idUser']})
+        return jsonify({"idUser": user['idUser'],"status": " success" ,"user_name" :user['username']  }),200
     else:
         return jsonify({"error": "Invalid username or password"}), 401
 
