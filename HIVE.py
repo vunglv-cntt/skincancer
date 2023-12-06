@@ -13,7 +13,7 @@ DEFAULT_PAGE = "Hive.py"
 SECOND_PAGE_NAME = "About"
 is_logged_in = False
 API_BASE_URL = "http://localhost:5000/api"
-
+ACCESS_TOKEN_KEY = "access_token"
 # all pages request
 def get_all_pages():
     default_pages = get_pages(DEFAULT_PAGE)
@@ -117,6 +117,10 @@ def signup():
 
         if response.status_code == 200:
             st.success(response.json()["message"])
+        elif response.status_code == 400:
+            error_data = response.json()
+            error_message = error_data.get("error", "Đã xảy ra lỗi không xác định.")
+            st.error(f"Lỗi đăng ký: {error_message}")
         else:
             st.error("Registration failed. Please try again.")
 

@@ -1,10 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_bcrypt import Bcrypt
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity
 from pymongo import MongoClient
+import secrets
 
+secret_key = secrets.token_hex(32)
 app = Flask(__name__)
+app.config['SECRET_KEY'] = secret_key
 bcrypt = Bcrypt(app)
-
+jwt = JWTManager(app)
 # Kết nối đến MongoDB
 client = MongoClient("mongodb+srv://levanvung113:vungle2001@hive-cluser.zw2amvy.mongodb.net/?retryWrites=true&w=majority")
 db = client["user_name"]
@@ -19,7 +23,8 @@ def api_login():
     user = users_collection.find_one({"username": username})
 
     if user and bcrypt.check_password_hash(user['password'], password):
-        return jsonify({"idUser": user['idUser'],"status": " success" ,"user_name" :user['username']  }),200
+        access_token = create_access_token(identity=username)
+        return jsonify({"idUser": user['idUser'],"status": " success" ,"user_name" :user['username'], "access_token": access_token, }),200
     else:
         return jsonify({"error": "Invalid username or password"}), 401
 
@@ -30,6 +35,17 @@ def api_signup():
     email = data.get('email')
     password = data.get('password')
 
+    # Kiểm tra xem username đã tồn tại hay chưa
+    existing_user = users_collection.find_one({"username": username})
+    if existing_user:
+        return jsonify({"error": "Username already exists"}), 400
+
+    # Kiểm tra xem email đã tồn tại hay chưa
+    existing_email = users_collection.find_one({"email": email})
+    if existing_email:
+        return jsonify({"error": "Email already exists"}), 400
+
+    # Nếu username và email không tồn tại, tiếp tục đăng ký
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     last_user = users_collection.find_one(sort=[("idUser", -1)])
