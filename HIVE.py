@@ -95,6 +95,10 @@ def login():
 
         if response.status_code == 200:
             data = response.json()
+            if data["status"] == "success":
+                access_token = data.get("access_token")
+                st.success(f"Login successful! Welcome, {data['username']}.")
+                st.session_state[ACCESS_TOKEN_KEY] = access_token
             handle_successful_login(username)
             print(data)
         else:
