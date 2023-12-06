@@ -1,25 +1,17 @@
 import streamlit as st
 import bcrypt
-from pathlib import Path
-import json
-from pymongo.mongo_client  import MongoClient
+from pymongo.mongo_client import MongoClient
 from streamlit_extras.switch_page_button import switch_page
 from streamlit.source_util import _on_pages_changed, get_pages
-from dotenv import load_dotenv
-import os
-
-
-load_dotenv()
-
+from pathlib import Path
+import json
 
 DEFAULT_PAGE = "Hive.py"
 SECOND_PAGE_NAME = "About"
 
-
 # all pages request
 def get_all_pages():
     default_pages = get_pages(DEFAULT_PAGE)
-
     pages_path = Path("pages.json")
 
     if pages_path.exists():
@@ -27,7 +19,6 @@ def get_all_pages():
         current_pages = get_pages(DEFAULT_PAGE)
         current_pages.update(saved_default_pages)
         _on_pages_changed.send()
-      
     else:
         saved_default_pages = default_pages.copy()
         pages_path.write_text(json.dumps(default_pages, indent=4))
@@ -66,26 +57,28 @@ def show_all_pages():
 # Hide default page
 def hide_page(name: str):
     current_pages = get_pages(DEFAULT_PAGE)
-
     for key, val in current_pages.items():
         if val["page_name"] == name:
             del current_pages[key]
             _on_pages_changed.send()
             break
 
-# calling only default(login) page  
+# calling only default(login) page
 clear_all_but_first_page()
 
 st.image('HIVE.png', use_column_width=True)
 st.title("Welcome to Hive")
-# st.sidebar.success("Select a page")
 
 uri = "mongodb+srv://levanvung113:vungle2001@hive-cluser.zw2amvy.mongodb.net/?retryWrites=true&w=majority"
-# Connect to MongoDB
 client = MongoClient(uri)
 db = client["user_name"]
 users_collection = db["hive"]
 
+# Callback to handle successful login
+def handle_successful_login(username):
+    show_all_pages()  # call all pages
+    hide_page(DEFAULT_PAGE.replace(".py", ""))  # hide first page
+    switch_page(SECOND_PAGE_NAME)  # switch to second page
 
 # Login form
 def login():
@@ -100,11 +93,8 @@ def login():
         if user:
             # Verify the password
             if bcrypt.checkpw(password.encode('utf-8'), user['password']):
-                # Redirect to the desired page
-                show_all_pages()  # call all page
-                hide_page(DEFAULT_PAGE.replace(".py", ""))  # hide first page
-                switch_page(SECOND_PAGE_NAME)   # switch to second page
-                # switch_page("Dashboard")
+                # Handle successful login
+                handle_successful_login(user['username'])
             else:
                 st.error("Invalid username or password")
                 clear_all_but_first_page()  # clear all page but show first page
@@ -143,5 +133,6 @@ def main():
         signup()
 
 
+# Execute the main app
 if __name__ == '__main__':
     main()
