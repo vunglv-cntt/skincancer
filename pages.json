@@ -17,16 +17,16 @@
           "icon": "",
           "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\2_Article.py"
      },
-     "9e8772e09322638acf9a1e0cc3aa4147": {
-          "page_script_hash": "9e8772e09322638acf9a1e0cc3aa4147",
+     "8fbe05d6179a3058bfe9471a8a5a7ca6": {
+          "page_script_hash": "8fbe05d6179a3058bfe9471a8a5a7ca6",
           "page_name": "Predict",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\3_Predict.py"
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Predict.py"
      },
-     "8f700ee5619f9b985eb25430335b173d": {
-          "page_script_hash": "8f700ee5619f9b985eb25430335b173d",
+     "9847507c862f297d4139d708a4a88c18": {
+          "page_script_hash": "9847507c862f297d4139d708a4a88c18",
           "page_name": "Profile",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\4_Profile.py"
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Profile.py"
      }
 }

@@ -1,5 +1,4 @@
 import streamlit as st
- 
 
 import bcrypt
 from pymongo.mongo_client import MongoClient
@@ -86,16 +85,17 @@ def login():
     st.header("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-
+    
     if st.button("Login"):
         # Retrieve user details from the database
         user = users_collection.find_one({"username": username})
-
+       
         if user:
             # Verify the password
             if bcrypt.checkpw(password.encode('utf-8'), user['password']):
                 # Handle successful login
-                
+                idUser = user['idUser']
+                print(idUser)
                 handle_successful_login(user['username'])
             else:
                 st.error("Invalid username or password")
