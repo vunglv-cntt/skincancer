@@ -2,7 +2,7 @@ import streamlit as st
 import bcrypt
 from pathlib import Path
 import json
-from pymongo import MongoClient
+from pymongo.mongo_client  import MongoClient
 from streamlit_extras.switch_page_button import switch_page
 from streamlit.source_util import _on_pages_changed, get_pages
 from dotenv import load_dotenv
@@ -12,8 +12,8 @@ import os
 load_dotenv()
 
 
-DEFAULT_PAGE = "HIVE.py"
-SECOND_PAGE_NAME = "Dashboard"
+DEFAULT_PAGE = "Hive.py"
+SECOND_PAGE_NAME = "About"
 
 
 # all pages request
@@ -24,6 +24,7 @@ def get_all_pages():
 
     if pages_path.exists():
         saved_default_pages = json.loads(pages_path.read_text())
+      
     else:
         saved_default_pages = default_pages.copy()
         pages_path.write_text(json.dumps(default_pages, indent=4))
@@ -76,11 +77,11 @@ st.image('HIVE.png', use_column_width=True)
 st.title("Welcome to Hive")
 # st.sidebar.success("Select a page")
 
-uri = os.getenv("API_KEY")
+uri = "mongodb+srv://levanvung113:vungle2001@hive-cluser.zw2amvy.mongodb.net/?retryWrites=true&w=majority"
 # Connect to MongoDB
 client = MongoClient(uri)
-db = client["Donate_app"]
-users_collection = db["users"]
+db = client["user_name"]
+users_collection = db["hive"]
 
 
 # Login form
@@ -96,7 +97,6 @@ def login():
         if user:
             # Verify the password
             if bcrypt.checkpw(password.encode('utf-8'), user['password']):
-                st.success("Logged In Sucessfully {}".format(username))
                 # Redirect to the desired page
                 show_all_pages()  # call all page
                 hide_page(DEFAULT_PAGE.replace(".py", ""))  # hide first page
