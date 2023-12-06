@@ -6,10 +6,14 @@ from streamlit_extras.switch_page_button import switch_page
 from streamlit.source_util import _on_pages_changed, get_pages
 from pathlib import Path
 import json
+import requests
+
 
 DEFAULT_PAGE = "Hive.py"
 SECOND_PAGE_NAME = "About"
 is_logged_in = False
+API_BASE_URL = "http://localhost:5000/api"
+
 # all pages request
 def get_all_pages():
     default_pages = get_pages(DEFAULT_PAGE)
@@ -85,24 +89,18 @@ def login():
     st.header("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    
+
     if st.button("Login"):
-        # Retrieve user details from the database
-        user = users_collection.find_one({"username": username})
-       
-        if user:
-            # Verify the password
-            if bcrypt.checkpw(password.encode('utf-8'), user['password']):
-                # Handle successful login
-                idUser = user['idUser']
-                print(idUser)
-                handle_successful_login(user['username'])
-            else:
-                st.error("Invalid username or password")
-                clear_all_but_first_page()  # clear all page but show first page
+        response = requests.post(f"{API_BASE_URL}/login", json={"username": username, "password": password})
+
+        if response.status_code == 200:
+            data = response.json()
+            handle_successful_login(username)
+            print(data)
         else:
             st.error("Invalid username or password")
-            clear_all_but_first_page()  # clear all page but show first page
+            clear_all_but_first_page()
+
 
 
 
@@ -115,27 +113,12 @@ def signup():
     password = st.text_input("Password", type="password")
 
     if st.button("Sign Up"):
-        # Hash the password
-        last_user = users_collection.find_one(sort=[("idUser", -1)])
-        
-        if last_user:
-            last_id_user = last_user.get("idUser", 0)
-        else:
-            last_id_user = 0
+        response = requests.post(f"{API_BASE_URL}/signup", json={"username": username, "email": email, "password": password})
 
-        # Tăng giá trị idUser
-        new_id_user = last_id_user + 1
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Insert user details into the database
-        user_data = {
-            "idUser": new_id_user,
-            "username": username,
-            "email": email,
-            "password": hashed_password
-        }
-        users_collection.insert_one(user_data)
-        st.success("Successfully registered!")
+        if response.status_code == 200:
+            st.success(response.json()["message"])
+        else:
+            st.error("Registration failed. Please try again.")
 
 # Run the Streamlit app
 def main():
