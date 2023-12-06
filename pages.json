@@ -1,32 +1,32 @@
 {
-    "be9cf917c92c5d23813004545f1cb57d": {
-        "page_script_hash": "be9cf917c92c5d23813004545f1cb57d",
-        "page_name": "Hive",
-        "icon": "",
-        "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\Hive.py"
-    },
-    "eb93a1dbb102718f4bae4e54d04a11df": {
-        "page_script_hash": "eb93a1dbb102718f4bae4e54d04a11df",
-        "page_name": "About",
-        "icon": "",
-        "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\1_About.py"
-    },
-    "a527b611254e20e901e6e3c34956a775": {
-        "page_script_hash": "a527b611254e20e901e6e3c34956a775",
-        "page_name": "Article",
-        "icon": "",
-        "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Article.py"
-    },
-    "8fbe05d6179a3058bfe9471a8a5a7ca6": {
-        "page_script_hash": "8fbe05d6179a3058bfe9471a8a5a7ca6",
-        "page_name": "Predict",
-        "icon": "",
-        "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Predict.py"
-    },
-    "bf4fbb69aed9feee611c2019607a9e34": {
-        "page_script_hash": "bf4fbb69aed9feee611c2019607a9e34",
-        "page_name": "Search_an_Item",
-        "icon": "",
-        "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Search an Item.py"
-    }
+     "be9cf917c92c5d23813004545f1cb57d": {
+          "page_script_hash": "be9cf917c92c5d23813004545f1cb57d",
+          "page_name": "Hive",
+          "icon": "",
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\Hive.py"
+     },
+     "eb93a1dbb102718f4bae4e54d04a11df": {
+          "page_script_hash": "eb93a1dbb102718f4bae4e54d04a11df",
+          "page_name": "About",
+          "icon": "",
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\1_About.py"
+     },
+     "3c5228a2952b016218ea5ff75468d789": {
+          "page_script_hash": "3c5228a2952b016218ea5ff75468d789",
+          "page_name": "Article",
+          "icon": "",
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\2_Article.py"
+     },
+     "9e8772e09322638acf9a1e0cc3aa4147": {
+          "page_script_hash": "9e8772e09322638acf9a1e0cc3aa4147",
+          "page_name": "Predict",
+          "icon": "",
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\3_Predict.py"
+     },
+     "8f700ee5619f9b985eb25430335b173d": {
+          "page_script_hash": "8f700ee5619f9b985eb25430335b173d",
+          "page_name": "Profile",
+          "icon": "",
+          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\4_Profile.py"
+     }
 }

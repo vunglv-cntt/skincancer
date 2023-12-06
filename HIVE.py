@@ -1,4 +1,6 @@
 import streamlit as st
+ 
+
 import bcrypt
 from pymongo.mongo_client import MongoClient
 from streamlit_extras.switch_page_button import switch_page
@@ -8,7 +10,7 @@ import json
 
 DEFAULT_PAGE = "Hive.py"
 SECOND_PAGE_NAME = "About"
-
+is_logged_in = False
 # all pages request
 def get_all_pages():
     default_pages = get_pages(DEFAULT_PAGE)
@@ -21,14 +23,13 @@ def get_all_pages():
         _on_pages_changed.send()
     else:
         saved_default_pages = default_pages.copy()
-        pages_path.write_text(json.dumps(default_pages, indent=4))
+        pages_path.write_text(json.dumps(default_pages, indent=5))
 
     return saved_default_pages
 
 # clear all page but not login page
 def clear_all_but_first_page():
     current_pages = get_pages(DEFAULT_PAGE)
-
     if len(current_pages.keys()) == 1:
         return
 
@@ -79,7 +80,7 @@ def handle_successful_login(username):
     show_all_pages()  # call all pages
     hide_page(DEFAULT_PAGE.replace(".py", ""))  # hide first page
     switch_page(SECOND_PAGE_NAME)  # switch to second page
-
+    
 # Login form
 def login():
     st.header("Login")
@@ -94,6 +95,7 @@ def login():
             # Verify the password
             if bcrypt.checkpw(password.encode('utf-8'), user['password']):
                 # Handle successful login
+                
                 handle_successful_login(user['username'])
             else:
                 st.error("Invalid username or password")
@@ -101,6 +103,9 @@ def login():
         else:
             st.error("Invalid username or password")
             clear_all_but_first_page()  # clear all page but show first page
+
+
+
 
 # Sign-up form
 def signup():
@@ -111,10 +116,20 @@ def signup():
 
     if st.button("Sign Up"):
         # Hash the password
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        last_user = users_collection.find_one(sort=[("idUser", -1)])
+        
+        if last_user:
+            last_id_user = last_user.get("idUser", 0)
+        else:
+            last_id_user = 0
 
+        # Tăng giá trị idUser
+        new_id_user = last_id_user + 1
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        
         # Insert user details into the database
         user_data = {
+            "idUser": new_id_user,
             "username": username,
             "email": email,
             "password": hashed_password
@@ -126,7 +141,7 @@ def signup():
 def main():
     # Display the login or sign-up form based on user selection
     form_choice = st.selectbox("Select an option:", ("Login", "Sign Up"))
-
+   
     if form_choice == "Login":
         login()
     elif form_choice == "Sign Up":
