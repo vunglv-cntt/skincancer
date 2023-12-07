@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required, unset_jwt_cookies
 from pymongo import MongoClient
 import secrets
 
@@ -66,6 +66,14 @@ def api_signup():
 
     users_collection.insert_one(user_data)
     return jsonify({"message": "Successfully registered!"})
+
+
+# @app.route('/api/logout', methods=['POST'])
+# @jwt_required()
+# def api_logout():
+#     resp = jsonify({"message": "Logout successful"})
+#     unset_jwt_cookies(resp)
+#     return resp, 200
 
 if __name__ == '__main__':
     app.run(debug=True)
