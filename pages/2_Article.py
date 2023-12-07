@@ -2,7 +2,7 @@ from PIL import Image
 import requests
 import streamlit as st
 from streamlit_lottie import st_lottie
-
+from Hive import logout
 st.set_page_config(
     page_title="Skin Cancer",
     page_icon="♋",
@@ -17,7 +17,9 @@ def load_lottieurl(url):
         return None
     return r.json()
 
-
+logout_button = st.sidebar.button("Logout")
+if logout_button:
+    logout()
 lottie_disease = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_gkgqj2yq.json")
 
 img_actinic = Image.open("./images/Actinic_Keratosis.jpg")

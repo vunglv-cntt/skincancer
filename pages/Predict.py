@@ -2,7 +2,7 @@ from PIL import Image
 import PIL
 import streamlit as st
 import tensorflow as tf
-
+from Hive import logout
 st.set_page_config(
     page_title="Skin Cancer Detection",
     page_icon="♋",
@@ -18,7 +18,9 @@ def load_model():
 
 
 st.title("Skin Cancer Detection")
-
+logout_button = st.sidebar.button("Logout")
+if logout_button:
+    logout()
 pic = st.file_uploader(
     label="Upload a picture",
     type=["png", "jpg", "jpeg"],
