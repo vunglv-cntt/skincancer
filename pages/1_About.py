@@ -12,13 +12,13 @@ def load_lottieurl(url):
     return r.json()
 
 
-st.set_page_config(
-    page_title="Skin Cancer",
-    page_icon="♋",
-    layout="wide",
-    initial_sidebar_state="expanded",
+# st.set_page_config(
+#     page_title="Skin Cancer",
+#     page_icon="♋",
+#     layout="wide",
+#     initial_sidebar_state="expanded",
     
-)
+# )
 st.sidebar.button("Logout",on_click=logout)
  
 lottie_health = load_lottieurl(
