@@ -19,7 +19,7 @@ def load_lottieurl(url):
 #     initial_sidebar_state="expanded",
     
 # )
-st.sidebar.button("Logout",on_click=logout)
+# st.sidebar.button("Logout",on_click=logout)
  
 lottie_health = load_lottieurl(
     "https://assets2.lottiefiles.com/packages/lf20_5njp3vgg.json"

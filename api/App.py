@@ -3,6 +3,9 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt_identity, jwt_required, unset_jwt_cookies
 from pymongo import MongoClient
 import secrets
+from PIL import Image
+import tensorflow as tf
+import io
 
 secret_key = secrets.token_hex(32)
 app = Flask(__name__)
@@ -13,7 +16,7 @@ jwt = JWTManager(app)
 client = MongoClient("mongodb+srv://levanvung113:vungle2001@hive-cluser.zw2amvy.mongodb.net/?retryWrites=true&w=majority")
 db = client["user_name"]
 users_collection = db["hive"]
-
+predictions_collection = db["predictions"]
 @app.route('/api/login', methods=['POST'])
 def api_login():
     data = request.json
@@ -68,6 +71,47 @@ def api_signup():
     return jsonify({"message": "Successfully registered!"})
 
 
+def load_model():
+    model = tf.keras.models.load_model("../model/model.h5")
+    return model
+labels = [
+    "actinic keratosis",
+    "basal cell carcinoma",
+    "dermatofibroma",
+    "melanoma",
+    "nevus",
+    "pigmented benign keratosis",
+    "seborrheic keratosis",
+    "squamous cell carcinoma",
+    "vascular lesion",
+]
+
+@app.route('/api/predict', methods=['POST'])
+def predict():
+    file = request.files['file']
+    img = Image.open(io.BytesIO(file.read())).convert("RGB")
+    img = img.resize((180, 180))
+    img = tf.keras.preprocessing.image.img_to_array(img)
+    img = tf.expand_dims(img, axis=0)
+
+    model = load_model()  # Hàm load_model giống như trong ứng dụng Streamlit của bạn
+
+    prediction = model.predict(img)
+    prediction = tf.nn.softmax(prediction)
+
+    score = tf.reduce_max(prediction)
+    score = tf.round(score * 100, 2)
+
+    prediction = tf.argmax(prediction, axis=1)
+    prediction = prediction.numpy()
+    prediction = prediction[0]
+
+    return jsonify({'disease': labels[prediction].title(), 'confidence': f'{score:.2f}%'})
+@app.route('/api/store', methods=['POST'])
+def store():
+    data = request.json
+    predictions_collection.insert_one(data)
+    return {'status': 'Data stored successfully'}
 # @app.route('/api/logout', methods=['POST'])
 # @jwt_required()
 # def api_logout():
