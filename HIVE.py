@@ -1,5 +1,5 @@
 import streamlit as st
-
+import streamlit_authenticator as stauth
 import bcrypt
 from pymongo.mongo_client import MongoClient
 from streamlit_extras.switch_page_button import switch_page
@@ -13,13 +13,13 @@ SECOND_PAGE_NAME = "About"
 
 API_BASE_URL = "http://localhost:5000/api"
 
-ACCESS_TOKEN_KEY = "access_token"
+ 
+
+authenticator = stauth.Authenticate(names, usernames, hashed_passwords,cookie_name='skin', key='abcdef', cookie_expiry_days=30)
 
 
-# Khởi tạo access_token trong session state
-if 'access_token' not in st.session_state:
-    st.session_state.access_token = None
-
+ 
+ 
 # all pages request
 def get_all_pages():
     default_pages = get_pages(DEFAULT_PAGE)
@@ -79,10 +79,10 @@ st.image('HIVE.png', use_column_width=True)
 st.title("Welcome to Hive")
 
 # Callback to handle successful login
-def handle_successful_login(access_token):
-    show_all_pages()  # Gọi tất cả các trang
-    hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
-    switch_page(SECOND_PAGE_NAME)  # Chuyển đến trang thứ hai
+def getInfo(access_token):
+    st.session_state.access_token = access_token
+    print(access_token)
+
 # Login form
 def login():
     st.header("Login")
@@ -91,12 +91,17 @@ def login():
 
     if st.button("Login"):
         response = requests.post(f"{API_BASE_URL}/login", json={"username": username, "password": password})
-        if response.status_code == 200:       
+        if response.status_code == 200:    
+         
             data = response.json()  
             access_token = data.get("access_token")
-            st.session_state.access_token = access_token
-            print(f"Access Token before calling handle_successful_login: {access_token}")
-            handle_successful_login(access_token)  
+            authenticator.login("Login", "main")
+            # user_name = data.get("user_name")
+            getInfo(access_token)
+            # print(f"Access Token before calling handle_successful_login: {access_token}")
+            show_all_pages()  # Gọi tất cả các trang
+            hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
+            switch_page(SECOND_PAGE_NAME)  # Chuyển đến trang thứ hai 
 
         else:
             st.error("Invalid username or password")
@@ -119,7 +124,7 @@ def signup():
             st.error("Registration failed. Please try again.")
 
 def logout():
-    st.session_state.access_token = None  # Xóa access_token khỏi session state
+    authenticator.logout()  # Xóa cookie
     clear_all_but_first_page()  # Hiển thị chỉ trang đăng nhập
  
 # Run the Streamlit app
