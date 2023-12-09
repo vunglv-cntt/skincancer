@@ -11,6 +11,9 @@ secret_key = secrets.token_hex(32)
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secret_key
 bcrypt = Bcrypt(app)
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_ALGORITHM'] = 'HS256'
+app.config['JWT_IDENTITY_CLAIM'] = 'sub'
 jwt = JWTManager(app)
 # Kết nối đến MongoDB
 client = MongoClient("mongodb+srv://levanvung113:vungle2001@hive-cluser.zw2amvy.mongodb.net/?retryWrites=true&w=majority")
@@ -70,7 +73,18 @@ def api_signup():
     users_collection.insert_one(user_data)
     return jsonify({"message": "Successfully registered!"})
 
+@app.route('/api/get_user_info', methods=['GET'])
+@jwt_required()
+def get_user_info():
+    current_user = get_jwt_identity()
+    user = users_collection.find_one({"username": current_user}, {"_id": 0, "password": 0})
 
+    if user:
+        # Trả về thông tin người dùng bao gồm user_name
+        return jsonify({"user_name": user.get("username", "")}), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
+    
 def load_model():
     model = tf.keras.models.load_model("../model/model.h5")
     return model
@@ -110,6 +124,17 @@ def predict():
 @app.route('/api/store', methods=['POST'])
 def store():
     data = request.json
+
+    last_record = predictions_collection.find_one(sort=[("id", -1)])
+    if last_record:
+        last_id = last_record.get("id", 0)
+    else:
+        last_id = 0
+
+    new_id = last_id + 1
+    data['id'] = new_id
+
+    # Thêm dữ liệu mới vào MongoDB
     predictions_collection.insert_one(data)
     return {'status': 'Data stored successfully'}
 # @app.route('/api/logout', methods=['POST'])
