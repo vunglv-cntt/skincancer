@@ -1,13 +1,11 @@
 import streamlit as st
 import requests
-from Hive import logout
 from datetime import datetime
+import base64
+from Hive import getInfo
 
 st.title("Skin Cancer Detection")
 
-# logout_button = st.sidebar.button("Logout")
-# if logout_button:
-#     logout()
 
 pic = st.file_uploader(
     label="Upload a picture",
@@ -15,10 +13,22 @@ pic = st.file_uploader(
     accept_multiple_files=False,
     help="Upload a picture of your skin to get a diagnosis",
 )
-
+def get_user_info():
+    try:
+        response = requests.get('http://localhost:5000/api/get_user_info', headers={'Authorization': f'Bearer {st.session_state.access_token}'})
+        if response.status_code == 200:
+            user_info = response.json()
+            return user_info.get('user_name', '')
+        else:
+            st.warning("Không thể lấy thông tin người dùng.")
+            return ''
+    except Exception as e:
+        st.error(f"Đã xảy ra lỗi khi gọi API: {e}")
+        return ''
+user_name = get_user_info()
 if st.button("Predict") and pic is not None:
     st.header("Results")
-
+    
     cols = st.columns([1, 2])
     with cols[0]:
         st.image(pic, caption=pic.name, use_column_width=True)
@@ -37,13 +47,14 @@ if st.button("Predict") and pic is not None:
                     st.write(f"**Dự đoán:** `{result['disease']}`")
                     st.write(f"**Độ tin cậy:** `{result['confidence']}`")
 
-                    # Gửi dữ liệu đến API MongoDB
+                    
+                     # Gửi dữ liệu đến API MongoDB
                     data = {
-                        'image': pic.name,
+                        'image': base64.b64encode(pic.read()).decode("utf-8"),
                         'disease': result['disease'],
                         'confidence': result['confidence'],
                         'time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'userid': 'userid'  
+                        'username': user_name
                     }
                     requests.post('http://localhost:5000/api/store', json=data)
 
