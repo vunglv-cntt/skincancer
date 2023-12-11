@@ -1,30 +1,24 @@
 import streamlit as st
-import streamlit_authenticator as stauth
-import bcrypt
 from pymongo.mongo_client import MongoClient
 from streamlit_extras.switch_page_button import switch_page
 from streamlit.source_util import _on_pages_changed, get_pages
 from pathlib import Path
 import json
 import requests
+import extra_streamlit_components as stx
+# from extra_streamlit_components import CookieManager
+# cookie_manager = CookieManager()
+
 
 DEFAULT_PAGE = "Hive.py"
 SECOND_PAGE_NAME = "About"
 
 API_BASE_URL = "http://localhost:5000/api"
 
- 
-
-authenticator = stauth.Authenticate(names, usernames, hashed_passwords,cookie_name='skin', key='abcdef', cookie_expiry_days=30)
-
-
- 
- 
 # all pages request
 def get_all_pages():
     default_pages = get_pages(DEFAULT_PAGE)
     pages_path = Path("pages.json")
-
     if pages_path.exists():
         saved_default_pages = json.loads(pages_path.read_text())
         current_pages = get_pages(DEFAULT_PAGE)
@@ -33,22 +27,17 @@ def get_all_pages():
     else:
         saved_default_pages = default_pages.copy()
         pages_path.write_text(json.dumps(default_pages, indent=5))
-
     return saved_default_pages
-
 # clear all page but not login page
 def clear_all_but_first_page():
     current_pages = get_pages(DEFAULT_PAGE)
     if len(current_pages.keys()) == 1:
         return
-
     get_all_pages()
-
     # Remove all but the login page
     for key, val in list(current_pages.items()):
         if val["page_name"] != DEFAULT_PAGE.replace(".py", ""):
             del current_pages[key]
-
     _on_pages_changed.send()
 
 # show all pages
@@ -56,7 +45,6 @@ def show_all_pages():
     current_pages = get_pages(DEFAULT_PAGE)
     saved_pages = get_all_pages()
     # Replace all the missing pages
-    st.button('Say hello')
     for key in saved_pages:
         if key not in current_pages:
             current_pages[key] = saved_pages[key]
@@ -77,31 +65,34 @@ clear_all_but_first_page()
 
 st.image('HIVE.png', use_column_width=True)
 st.title("Welcome to Hive")
+ 
+@st.cache_resource(hash_funcs={"_thread.RLock": lambda _: None}, experimental_allow_widgets=True)
+def get_manager():
+    return stx.CookieManager()
 
+cookie_manager = get_manager()
 # Callback to handle successful login
 def getInfo(access_token):
-    st.session_state.access_token = access_token
-    print(access_token)
+    cookie = st.text_input("Cookie", key="1")
+    cookie_manager.set( cookie,access_token)
+    
+     # print(access_token)
 
 # Login form
 def login():
     st.header("Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-
     if st.button("Login"):
         response = requests.post(f"{API_BASE_URL}/login", json={"username": username, "password": password})
         if response.status_code == 200:    
-         
             data = response.json()  
             access_token = data.get("access_token")
-            authenticator.login("Login", "main")
-            # user_name = data.get("user_name")
             getInfo(access_token)
-            # print(f"Access Token before calling handle_successful_login: {access_token}")
             show_all_pages()  # Gọi tất cả các trang
             hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
             switch_page(SECOND_PAGE_NAME)  # Chuyển đến trang thứ hai 
+           
 
         else:
             st.error("Invalid username or password")
@@ -124,7 +115,6 @@ def signup():
             st.error("Registration failed. Please try again.")
 
 def logout():
-    authenticator.logout()  # Xóa cookie
     clear_all_but_first_page()  # Hiển thị chỉ trang đăng nhập
  
 # Run the Streamlit app
