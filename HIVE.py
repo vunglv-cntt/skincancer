@@ -73,7 +73,6 @@ def set_access_token_in_local_storage(access_token):
         height=0,
         width=0
     )   
- 
 # Login form
 def login():
     st.header("Login")
@@ -84,7 +83,6 @@ def login():
         if response.status_code == 200:    
             data = response.json()  
             access_token = data.get("access_token")
-            st.session_state['access_token'] = access_token
             set_access_token_in_local_storage(access_token)
             show_all_pages()  # Gọi tất cả các trang
             hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
@@ -92,7 +90,7 @@ def login():
         else:
             st.error("Invalid username or password")
             clear_all_but_first_page()
-            
+
 # Sign-up form
 def signup():
     st.header("Sign Up")
@@ -109,7 +107,6 @@ def signup():
             st.error(f"Lỗi đăng ký: {error_message}")
         else:
             st.error("Registration failed. Please try again.")
-
 def clear_access_token_from_local_storage():
     # Tạo mã JavaScript để xóa access_token khỏi localStorage
     js_code = """
@@ -124,6 +121,7 @@ def clear_access_token_from_local_storage():
 def logout():
     clear_access_token_from_local_storage()  # Xóa access token khỏi localStorage
     clear_all_but_first_page()  # Hiển thị chỉ trang đăng nhập
+ 
  
 # Run the Streamlit app
 def main():
