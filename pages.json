@@ -1,32 +1,32 @@
 {
-     "4a66e1b5617be84867f66716fd296bac": {
-          "page_script_hash": "4a66e1b5617be84867f66716fd296bac",
-          "page_name": "Hive",
+     "5cd2e8e265d2ac6525dfda7708f8b866": {
+          "page_script_hash": "5cd2e8e265d2ac6525dfda7708f8b866",
+          "page_name": "HIVE",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\Hive.py"
+          "script_path": "D:\\CODE\\SKIN\\skincancer\\HIVE.py"
      },
-     "eb93a1dbb102718f4bae4e54d04a11df": {
-          "page_script_hash": "eb93a1dbb102718f4bae4e54d04a11df",
+     "144da7f08a6ed482b12a889e6429402e": {
+          "page_script_hash": "144da7f08a6ed482b12a889e6429402e",
           "page_name": "About",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\1_About.py"
+          "script_path": "D:\\CODE\\SKIN\\skincancer\\pages\\1_About.py"
      },
-     "3c5228a2952b016218ea5ff75468d789": {
-          "page_script_hash": "3c5228a2952b016218ea5ff75468d789",
+     "1060dd3a9de1348902f6a37f9a0ced23": {
+          "page_script_hash": "1060dd3a9de1348902f6a37f9a0ced23",
           "page_name": "Article",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\2_Article.py"
+          "script_path": "D:\\CODE\\SKIN\\skincancer\\pages\\2_Article.py"
      },
-     "8fbe05d6179a3058bfe9471a8a5a7ca6": {
-          "page_script_hash": "8fbe05d6179a3058bfe9471a8a5a7ca6",
+     "18114a94d316c0b9b45ab3b67a7ec12f": {
+          "page_script_hash": "18114a94d316c0b9b45ab3b67a7ec12f",
           "page_name": "Predict",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Predict.py"
+          "script_path": "D:\\CODE\\SKIN\\skincancer\\pages\\Predict.py"
      },
-     "9847507c862f297d4139d708a4a88c18": {
-          "page_script_hash": "9847507c862f297d4139d708a4a88c18",
+     "89935b5a48e5e48669da07e348222e16": {
+          "page_script_hash": "89935b5a48e5e48669da07e348222e16",
           "page_name": "Profile",
           "icon": "",
-          "script_path": "D:\\CODE\\DOAN\\SKIN_CANCER\\pages\\Profile.py"
+          "script_path": "D:\\CODE\\SKIN\\skincancer\\pages\\Profile.py"
      }
 }

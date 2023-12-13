@@ -2,7 +2,7 @@ from PIL import Image
 import requests
 import streamlit as st
 from streamlit_lottie import st_lottie
-from Hive import logout
+from HIVE import logout
 # st.set_page_config(
 #     page_title="Skin Cancer",
 #     page_icon="♋",

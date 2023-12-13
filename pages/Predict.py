@@ -2,11 +2,11 @@ import streamlit as st
 import requests
 from datetime import datetime
 import base64
-from Hive import getInfo
+# from HIVE import getInfo
 
 st.title("Skin Cancer Detection")
 
-
+# getInfo()
 pic = st.file_uploader(
     label="Upload a picture",
     type=["png", "jpg", "jpeg"],
