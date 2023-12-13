@@ -1,16 +1,14 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from pymongo.mongo_client import MongoClient
 from streamlit_extras.switch_page_button import switch_page
 from streamlit.source_util import _on_pages_changed, get_pages
 from pathlib import Path
 import json
 import requests
-import extra_streamlit_components as stx
-# from extra_streamlit_components import CookieManager
-# cookie_manager = CookieManager()
+# from streamlit.server.server import Server
 
-
-DEFAULT_PAGE = "Hive.py"
+DEFAULT_PAGE = "HIVE.py"
 SECOND_PAGE_NAME = "About"
 
 API_BASE_URL = "http://localhost:5000/api"
@@ -59,25 +57,22 @@ def hide_page(name: str):
             del current_pages[key]
             _on_pages_changed.send()
             break
-
 # calling only default(login) page
 clear_all_but_first_page()
 
 st.image('HIVE.png', use_column_width=True)
 st.title("Welcome to Hive")
- 
-@st.cache_resource(hash_funcs={"_thread.RLock": lambda _: None}, experimental_allow_widgets=True)
-def get_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_manager()
 # Callback to handle successful login
-def getInfo(access_token):
-    cookie = st.text_input("Cookie", key="1")
-    cookie_manager.set( cookie,access_token)
-    
-     # print(access_token)
-
+def set_access_token_in_local_storage(access_token):
+    components.html(
+        f"""
+        <script>
+        localStorage.setItem('access_token', '{access_token}');
+        </script>
+        """,
+        height=0,
+        width=0
+    )   
 # Login form
 def login():
     st.header("Login")
@@ -88,15 +83,14 @@ def login():
         if response.status_code == 200:    
             data = response.json()  
             access_token = data.get("access_token")
-            getInfo(access_token)
+            set_access_token_in_local_storage(access_token)
             show_all_pages()  # Gọi tất cả các trang
             hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
             switch_page(SECOND_PAGE_NAME)  # Chuyển đến trang thứ hai 
-           
-
         else:
             st.error("Invalid username or password")
             clear_all_but_first_page()
+
 # Sign-up form
 def signup():
     st.header("Sign Up")
