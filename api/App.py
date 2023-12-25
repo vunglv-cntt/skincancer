@@ -6,14 +6,17 @@ import secrets
 from PIL import Image
 import tensorflow as tf
 import io
-
+from flask_cors import CORS
+from datetime import timedelta
 secret_key = secrets.token_hex(32)
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = secret_key
 bcrypt = Bcrypt(app)
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_ALGORITHM'] = 'HS256'
 app.config['JWT_IDENTITY_CLAIM'] = 'sub'
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
 # Kết nối đến MongoDB
 client = MongoClient("mongodb+srv://levanvung113:vungle2001@hive-cluser.zw2amvy.mongodb.net/?retryWrites=true&w=majority")
@@ -81,7 +84,7 @@ def get_user_info():
 
     if user:
         # Trả về thông tin người dùng bao gồm user_name
-        return jsonify({"user_name": user.get("username", "")}), 200
+        return jsonify({"user_name": user.get("username", ""), "idUser": user.get("idUser", "")}), 200
     else:
         return jsonify({"error": "User not found"}), 404
     
@@ -124,7 +127,6 @@ def predict():
 @app.route('/api/store', methods=['POST'])
 def store():
     data = request.json
-
     last_record = predictions_collection.find_one(sort=[("id", -1)])
     if last_record:
         last_id = last_record.get("id", 0)
@@ -137,6 +139,26 @@ def store():
     # Thêm dữ liệu mới vào MongoDB
     predictions_collection.insert_one(data)
     return {'status': 'Data stored successfully'}
+
+@app.route('/api/get_predictions_by_user_id', methods=['GET'])
+@jwt_required()
+def get_predictions_by_user_id():
+    current_user = get_jwt_identity()
+    user = users_collection.find_one({"username": current_user}, {"_id": 0, "password": 0})
+
+    if user:
+        user_id = user.get("idUser")
+
+        # Thay đổi từ find_one thành find để lấy tất cả các bản ghi
+        predictions = predictions_collection.find({"userId": str(user_id)}, {"_id": 0})
+
+        # Chuyển đổi con trỏ dự đoán thành danh sách để sử dụng jsonify
+        predictions_list = list(predictions)
+
+        # Trả về danh sách dự đoán cho người dùng
+        return jsonify(predictions_list), 200
+    else:
+        return jsonify({"error": "User not found"}), 404
 # @app.route('/api/logout', methods=['POST'])
 # @jwt_required()
 # def api_logout():

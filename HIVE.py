@@ -63,6 +63,35 @@ clear_all_but_first_page()
 st.image('HIVE.png', use_column_width=True)
 st.title("Welcome to Hive")
 # Callback to handle successful login
+
+# Login form
+def login():
+    st.header("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        response = requests.post(f"{API_BASE_URL}/login", json={"username": username, "password": password})
+        if response.status_code == 200:
+            data = response.json()  
+            access_token = data.get("access_token")
+            # print(access_token)
+            if access_token is not None:
+                components.html(
+                    f"""
+                    <script>
+                    localStorage.setItem('access_token', '{access_token}');
+                    </script>
+                    """,
+                    height=0,
+                    width=0
+                )   
+            show_all_pages()  # Gọi tất cả các trang
+            hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
+            switch_page(SECOND_PAGE_NAME)  # Chuyển đến trang thứ hai 
+            set_access_token_in_local_storage(access_token) 
+        else:
+            st.error("Invalid username or password")
+            clear_all_but_first_page()
 def set_access_token_in_local_storage(access_token):
     components.html(
         f"""
@@ -73,24 +102,6 @@ def set_access_token_in_local_storage(access_token):
         height=0,
         width=0
     )   
-# Login form
-def login():
-    st.header("Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    if st.button("Login"):
-        response = requests.post(f"{API_BASE_URL}/login", json={"username": username, "password": password})
-        if response.status_code == 200:    
-            data = response.json()  
-            access_token = data.get("access_token")
-            set_access_token_in_local_storage(access_token)
-            show_all_pages()  # Gọi tất cả các trang
-            hide_page(DEFAULT_PAGE.replace(".py", ""))  # Ẩn trang đầu tiên
-            switch_page(SECOND_PAGE_NAME)  # Chuyển đến trang thứ hai 
-        else:
-            st.error("Invalid username or password")
-            clear_all_but_first_page()
-
 # Sign-up form
 def signup():
     st.header("Sign Up")
@@ -122,10 +133,9 @@ def logout():
     clear_access_token_from_local_storage()  # Xóa access token khỏi localStorage
     clear_all_but_first_page()  # Hiển thị chỉ trang đăng nhập
  
- 
+
 # Run the Streamlit app
 def main():
-    # Hiển thị biểu mẫu đăng nhập hoặc đăng ký nếu chưa đăng nhập
         form_choice = st.selectbox("Select an option:", ("Login", "Sign Up"))
         if form_choice == "Login":
             login()
