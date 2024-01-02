@@ -27,9 +27,9 @@ bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
 
 client = MongoClient(os.getenv('MONGO_URI'))
-db = client["user_name"]
-users_collection = db["hive"]
-predictions_collection = db["predictions"]
+db = client["skin_cancer"]
+users_collection = db["User"]
+predictions_collection = db["Predict"]
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
