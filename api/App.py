@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,get_jwt_identity, jwt_required, unset_jwt_cookies
 from pymongo import MongoClient
-import secrets
+from bson import ObjectId
 from PIL import Image
 import tensorflow as tf
 import io
@@ -11,7 +11,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import os
 from utils import load_model
-
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)
@@ -163,7 +163,9 @@ def get_predictions_by_user_id():
         total_pages = (total_records + page_size - 1) // page_size
 
         # Truy vấn dữ liệu được phân trang từ MongoDB
-        predictions = predictions_collection.find({"userId": str(user_id)}, {"_id": 0}).skip(skip).limit(page_size)
+        predictions = predictions_collection.find(
+            {"userId": str(user_id)}, {"_id": 0}
+        ).sort("time", -1).skip(skip).limit(page_size)
         predictions_list = list(predictions)
 
         # Trả về dữ liệu cùng thông tin phân trang
