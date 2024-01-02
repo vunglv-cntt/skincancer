@@ -98,6 +98,7 @@ labels = [
     "actinic keratosis",
     "basal cell carcinoma",
     "dermatofibroma",
+    "error",
     "melanoma",
     "nevus",
     "pigmented benign keratosis",
