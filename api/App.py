@@ -14,15 +14,16 @@ import os
 from utils import load_model
 from werkzeug.utils import secure_filename
 import boto3
-import boto3
+
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'D:/CODE/SKIN/skincancer/UPLOAD_FOLDER'
 CORS(app)
 
-r2session = boto3.Session(region_name='us-east-1')
-bucket_name="r2admin1234"
-s3client = r2session.client('s3')
-s3client.create_bucket(Bucket=bucket_name)
+# r2session = boto3.Session(region_name='us-east-1')
+# # bucket_name="r2admin1234"
+# s3client = r2session.client('s3')
+# s3client.create_bucket(Bucket="vung-skin-cancer")
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key')
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
@@ -30,6 +31,19 @@ app.config['JWT_ALGORITHM'] = 'HS256'
 app.config['JWT_IDENTITY_CLAIM'] = 'sub'
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=1)
 app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(days=30)
+
+
+app.config['S3_BUCKET'] = os.getenv('S3_BUCKET_NAME')
+app.config['S3_KEY'] = os.getenv('AWS_ACCESS_KEY_ID')
+app.config['S3_SECRET'] = os.getenv('AWS_SECRET_ACCESS_KEY')
+app.config['S3_REGION'] = os.getenv('AWS_REGION')
+
+s3client = boto3.client(
+    's3',
+    aws_access_key_id=app.config['S3_KEY'],
+    aws_secret_access_key=app.config['S3_SECRET'],
+    region_name=app.config['S3_REGION']
+)
 
 bcrypt = Bcrypt(app)
 jwt = JWTManager(app)
@@ -281,34 +295,187 @@ def create_post():
     content = request.form.get('content')
     image = request.files.get('image')
 
-    print(title,"title")
-    print(content,"content")
     if not title or not content:
-        return jsonify({"error": "Title and content are required"}), 400
+        return jsonify({'error': 'Title and content are required'}), 400
 
-    # Save image and get URL
-    if not title or not content or not image:
-        return jsonify({'error': 'Missing data'}), 400
+    image_url = None
+    if image:
+        # Secure and generate filename
+        filename = secure_filename(image.filename)
+        # Generate the file path
+        file_path = f"images/{filename}"
 
-    # Save image to the filesystem
-    filename = secure_filename(image.filename)
-    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # Upload the image to S3
+        s3client.upload_fileobj(
+            image,
+            app.config['S3_BUCKET'],
+            file_path,
+            ExtraArgs={'ACL': 'public-read'}
+        )
+
+        image_url = f"https://{app.config['S3_BUCKET']}.s3.amazonaws.com/{file_path}"
+
+    # Get the last_post_id and increment it
+    last_post_id_doc = db["last_post_id"].find_one()
+    if last_post_id_doc is None:
+        last_post_id = 1
+        db["last_post_id"].insert_one({"_id": "last_post_id", "value": last_post_id})
+    else:
+        last_post_id = last_post_id_doc["value"] + 1
+        db["last_post_id"].update_one({"_id": "last_post_id"}, {"$set": {"value": last_post_id}})
 
     new_post = {
-    "title": title,
-    "content": content,
-    "image_url": filename,
-    "author": current_user,
-    "likes": [],
-    "comments": [],
-    "created_at": datetime.datetime.utcnow(),
-    "updated_at": datetime.datetime.utcnow()
+        "post_id": last_post_id,
+        "title": title,
+        "content": content,
+        "image_url": image_url,
+        "author": current_user,
+        "comments": [],
+        "reactions": [],
+        "created_at": datetime.datetime.utcnow(),
+        "updated_at": datetime.datetime.utcnow()
     }
     post_id = post_collection.insert_one(new_post).inserted_id
 
-    # Update the new_post dictionary to convert ObjectId to string
+    # Convert ObjectId to string
     new_post['_id'] = str(post_id)
 
     return jsonify({"message": "Post created", "post": new_post}), 201
+
+@app.route('/api/editPost', methods=['PUT'])
+@jwt_required()
+def update_post():
+    post_id = request.args.get('post_id', type = int)
+    if post_id is None:
+        return jsonify({"error": "Missing post_id parameter"}), 400
+    current_user = get_jwt_identity()
+    title = request.form.get('title')
+    content = request.form.get('content')
+    image = request.files.get('image')
+
+    post = post_collection.find_one({"post_id": post_id, "author": current_user})
+
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
+
+    update_data = {}
+
+    if title:
+        update_data['title'] = title
+    if content:
+        update_data['content'] = content
+    if image:
+        filename = secure_filename(image.filename)
+        file_path = f"images/{filename}"
+        s3client.upload_fileobj(
+            image,
+            app.config['S3_BUCKET'],
+            file_path,
+            ExtraArgs={'ACL': 'public-read'}
+        )
+        image_url = f"https://{app.config['S3_BUCKET']}.s3.amazonaws.com/{file_path}"
+        update_data['image_url'] = image_url
+
+    update_data['updated_at'] = datetime.datetime.utcnow()
+
+    post_collection.update_one({"post_id": post_id, "author": current_user}, {"$set": update_data})
+
+    return jsonify({"message": "Post updated"}), 200
+
+@app.route('/api/deletePost', methods=['DELETE'])
+@jwt_required()
+def delete_post():
+    post_id = request.args.get('post_id', type = int)
+    if post_id is None:
+        return jsonify({"error": "Missing post_id parameter"}), 400
+    current_user = get_jwt_identity()
+
+    post = post_collection.find_one({"post_id": post_id, "author": current_user})
+
+    if not post:
+        return jsonify({"error": "Post not found"}), 404
+
+    post_collection.delete_one({"post_id": post_id, "author": current_user})
+
+    return jsonify({"message": "Post deleted"}), 200
+
+@app.route('/api/posts/<int:post_id>/comments', methods=['POST'])
+@jwt_required()
+def add_comment(post_id):
+    current_user = get_jwt_identity()
+    text = request.form.get('text')
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    # Get the last_comment_id and increment it
+    last_comment_id_doc = db["last_comment_id"].find_one()
+    if last_comment_id_doc is None:
+        last_comment_id = 1
+        db["last_comment_id"].insert_one({"_id": "last_comment_id", "value": last_comment_id})
+    else:
+        last_comment_id = last_comment_id_doc["value"] + 1
+        db["last_comment_id"].update_one({"_id": "last_comment_id"}, {"$set": {"value": last_comment_id}})
+
+    comment = {
+        "comment_id": last_comment_id,
+        "user": current_user,
+        "text": text,
+        "replies": []
+    }
+
+    post_collection.update_one({"post_id": post_id}, {"$push": {"comments": comment}})
+
+    return jsonify({"message": "Comment added"}), 201
+
+@app.route('/api/posts/<int:post_id>/reactions', methods=['POST'])
+@jwt_required()
+def add_reaction(post_id):
+    current_user = get_jwt_identity()
+    type = request.form.get('type')
+
+    if not type or type not in ['like', 'unlike']:
+        return jsonify({'error': 'Valid type (like or unlike) is required'}), 400
+
+    reaction = post_collection.find_one({"post_id": post_id, "reactions.user": current_user})
+
+    if reaction:
+        post_collection.update_one({"post_id": post_id, "reactions.user": current_user}, {"$set": {"reactions.$.type": type}})
+    else:
+        new_reaction = {
+            "user": current_user,
+            "type": type
+        }
+        post_collection.update_one({"post_id": post_id}, {"$push": {"reactions": new_reaction}})
+
+    return jsonify({"message": "Reaction added or updated"}), 201
+
+@app.route('/api/posts/<int:post_id>/comments/<int:comment_id>/replies', methods=['POST'])
+@jwt_required()
+def add_reply(post_id, comment_id):
+    current_user = get_jwt_identity()
+    text = request.form.get('text')
+
+    if not text:
+        return jsonify({'error': 'Text is required'}), 400
+
+    # Get the last_reply_id and increment it
+    last_reply_id_doc = db["last_reply_id"].find_one()
+    if last_reply_id_doc is None:
+        last_reply_id = 1
+        db["last_reply_id"].insert_one({"_id": "last_reply_id", "value": last_reply_id})
+    else:
+        last_reply_id = last_reply_id_doc["value"] + 1
+        db["last_reply_id"].update_one({"_id": "last_reply_id"}, {"$set": {"value": last_reply_id}})
+
+    reply = {
+        "reply_id": last_reply_id,
+        "user": current_user,
+        "text": text
+    }
+
+    post_collection.update_one({"post_id": post_id, "comments.comment_id": comment_id}, {"$push": {"comments.$.replies": reply}})
+
+    return jsonify({"message": "Reply added"}), 201
 if __name__ == '__main__':
     app.run(debug=True)
