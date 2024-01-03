@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, request, jsonify
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, create_refresh_token,get_jwt_identity, jwt_required, unset_jwt_cookies
@@ -12,9 +13,16 @@ from dotenv import load_dotenv
 import os
 from utils import load_model
 from werkzeug.utils import secure_filename
+import boto3
+import boto3
 
 app = Flask(__name__)
 CORS(app)
+
+r2session = boto3.Session(region_name='us-east-1')
+bucket_name="r2admin1234"
+s3client = r2session.client('s3')
+s3client.create_bucket(Bucket=bucket_name)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-secret-key')
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
@@ -30,6 +38,7 @@ client = MongoClient(os.getenv('MONGO_URI'))
 db = client["skin_cancer"]
 users_collection = db["User"]
 predictions_collection = db["Predict"]
+post_collection = db["Post"]
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -261,5 +270,45 @@ def get_predictions_by_disease():
             return jsonify({"error": "Disease parameter is required"}), 400
     else:
         return jsonify({"error": "User not found"}), 404
+    
+
+    
+@app.route('/api/posts', methods=['POST'])
+@jwt_required()
+def create_post():
+    current_user = get_jwt_identity()
+    title = request.form.get('title')
+    content = request.form.get('content')
+    image = request.files.get('image')
+
+    print(title,"title")
+    print(content,"content")
+    if not title or not content:
+        return jsonify({"error": "Title and content are required"}), 400
+
+    # Save image and get URL
+    if not title or not content or not image:
+        return jsonify({'error': 'Missing data'}), 400
+
+    # Save image to the filesystem
+    filename = secure_filename(image.filename)
+    image.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+
+    new_post = {
+    "title": title,
+    "content": content,
+    "image_url": filename,
+    "author": current_user,
+    "likes": [],
+    "comments": [],
+    "created_at": datetime.datetime.utcnow(),
+    "updated_at": datetime.datetime.utcnow()
+    }
+    post_id = post_collection.insert_one(new_post).inserted_id
+
+    # Update the new_post dictionary to convert ObjectId to string
+    new_post['_id'] = str(post_id)
+
+    return jsonify({"message": "Post created", "post": new_post}), 201
 if __name__ == '__main__':
     app.run(debug=True)
