@@ -490,7 +490,7 @@ def get_all_posts():
 @jwt_required()
 def get_posts_by_user():
     current_user = get_jwt_identity()
-    posts = post_collection.find({"author": current_user})
+    posts = post_collection.find({"author": current_user}).sort("created_at", -1)
     result = []
     for post in posts:
         post['_id'] = str(post['_id'])  # Convert ObjectId to string
