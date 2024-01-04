@@ -316,13 +316,13 @@ def create_post():
         image_url = f"https://{app.config['S3_BUCKET']}.s3.amazonaws.com/{file_path}"
 
     # Get the last_post_id and increment it
-    last_post_id_doc = db["last_post_id"].find_one()
-    if last_post_id_doc is None:
+    metadata = db["metadata"].find_one({"_id": "metadata"})
+    if metadata is None:
         last_post_id = 1
-        db["last_post_id"].insert_one({"_id": "last_post_id", "value": last_post_id})
+        db["metadata"].insert_one({"_id": "metadata", "last_post_id": last_post_id})
     else:
-        last_post_id = last_post_id_doc["value"] + 1
-        db["last_post_id"].update_one({"_id": "last_post_id"}, {"$set": {"value": last_post_id}})
+        last_post_id = metadata["last_post_id"] + 1
+        db["metadata"].update_one({"_id": "metadata"}, {"$set": {"last_post_id": last_post_id}})
 
     new_post = {
         "post_id": last_post_id,
@@ -408,14 +408,13 @@ def add_comment(post_id):
     if not text:
         return jsonify({'error': 'Text is required'}), 400
 
-    # Get the last_comment_id and increment it
-    last_comment_id_doc = db["last_comment_id"].find_one()
-    if last_comment_id_doc is None:
-        last_comment_id = 1
-        db["last_comment_id"].insert_one({"_id": "last_comment_id", "value": last_comment_id})
-    else:
-        last_comment_id = last_comment_id_doc["value"] + 1
-        db["last_comment_id"].update_one({"_id": "last_comment_id"}, {"$set": {"value": last_comment_id}})
+    # Get the post and increment last_comment_id
+    post = post_collection.find_one({"post_id": post_id})
+    if post is None:
+        return jsonify({'error': 'Post not found'}), 404
+
+    last_comment_id = post.get('last_comment_id', 0) + 1
+    post_collection.update_one({"post_id": post_id}, {"$set": {"last_comment_id": last_comment_id}})
 
     comment = {
         "comment_id": last_comment_id,
@@ -449,7 +448,6 @@ def add_reaction(post_id):
         post_collection.update_one({"post_id": post_id}, {"$push": {"reactions": new_reaction}})
 
     return jsonify({"message": "Reaction added or updated"}), 201
-
 @app.route('/api/posts/<int:post_id>/comments/<int:comment_id>/replies', methods=['POST'])
 @jwt_required()
 def add_reply(post_id, comment_id):
@@ -460,13 +458,13 @@ def add_reply(post_id, comment_id):
         return jsonify({'error': 'Text is required'}), 400
 
     # Get the last_reply_id and increment it
-    last_reply_id_doc = db["last_reply_id"].find_one()
-    if last_reply_id_doc is None:
+    metadata = db["metadata"].find_one({"_id": "metadata"})
+    if metadata is None:
         last_reply_id = 1
-        db["last_reply_id"].insert_one({"_id": "last_reply_id", "value": last_reply_id})
+        db["metadata"].insert_one({"_id": "metadata", "last_reply_id": last_reply_id})
     else:
-        last_reply_id = last_reply_id_doc["value"] + 1
-        db["last_reply_id"].update_one({"_id": "last_reply_id"}, {"$set": {"value": last_reply_id}})
+        last_reply_id = int(metadata.get("last_reply_id", 0)) + 1
+        db["metadata"].update_one({"_id": "metadata"}, {"$set": {"last_reply_id": last_reply_id}})
 
     reply = {
         "reply_id": last_reply_id,
@@ -477,5 +475,26 @@ def add_reply(post_id, comment_id):
     post_collection.update_one({"post_id": post_id, "comments.comment_id": comment_id}, {"$push": {"comments.$.replies": reply}})
 
     return jsonify({"message": "Reply added"}), 201
+
+@app.route('/api/getAllposts', methods=['GET'])
+@jwt_required()
+def get_all_posts():
+    posts = post_collection.find().sort("created_at", -1)
+    result = []
+    for post in posts:
+        post['_id'] = str(post['_id'])  # Convert ObjectId to string
+        result.append(post)
+    return jsonify({"data":result}), 200
+
+@app.route('/api/getPostUser/', methods=['GET'])
+@jwt_required()
+def get_posts_by_user():
+    current_user = get_jwt_identity()
+    posts = post_collection.find({"author": current_user})
+    result = []
+    for post in posts:
+        post['_id'] = str(post['_id'])  # Convert ObjectId to string
+        result.append(post)
+    return jsonify({"data":result}), 200
 if __name__ == '__main__':
     app.run(debug=True)
