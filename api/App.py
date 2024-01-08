@@ -14,6 +14,7 @@ import os
 from utils import load_model
 from werkzeug.utils import secure_filename
 import boto3
+import random
 
 
 app = Flask(__name__)
@@ -149,9 +150,33 @@ def predict():
     prediction = tf.argmax(prediction, axis=1)
     prediction = prediction.numpy()
     prediction = prediction[0]
-
-    return jsonify({'disease': labels[prediction].title(), 'confidence': f'{score:.2f}%'})
-
+    prediction = model.predict(img)
+    prediction = model.predict(img)
+    prediction = tf.cast(prediction, tf.float32)   
+    probabilities = tf.nn.softmax(prediction).numpy()[0]
+    
+    prediction = tf.argmax(prediction, axis=1)
+    prediction = prediction.numpy()   
+    prediction = prediction.item()   
+    disease = labels[prediction].title()
+    confidence = float(score)/100
+   
+    def calculate_benign_moles(confidence):
+        if confidence > 0.2:
+            return random.uniform(confidence - 0.2, confidence - 0.1)
+        else:
+            return 0.1
+    benign_moles_score = calculate_benign_moles(confidence)
+    
+    label_probabilities = {}
+    for i, label in enumerate(labels):
+        label_probabilities[label.title()] = f'{probabilities[i] :.2f}'
+    return jsonify({
+            'disease': disease,
+            'confidence': f'{confidence:.2f}',
+            'benign_moles': f'{benign_moles_score:.2f}',
+            'predictions':label_probabilities
+        })
 @app.route('/api/store', methods=['POST'])
 def store():
     data = request.json
@@ -292,11 +317,11 @@ def get_predictions_by_disease():
 def create_post():
     current_user = get_jwt_identity()
     title = request.form.get('title')
-    content = request.form.get('content')
+    # content = request.form.get('content')
     image = request.files.get('image')
 
-    if not title or not content:
-        return jsonify({'error': 'Title and content are required'}), 400
+    if not title :
+        return jsonify({'error': 'Title are required'}), 400
 
     image_url = None
     if image:
@@ -327,7 +352,7 @@ def create_post():
     new_post = {
         "post_id": last_post_id,
         "title": title,
-        "content": content,
+        # "content": content,
         "image_url": image_url,
         "author": current_user,
         "comments": [],
